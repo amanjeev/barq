@@ -1,0 +1,10 @@
+[package]
+name = "barq"
+version = "0.1.1"
+edition = "2021"
+description = "Interactive visualization of microcontroller Flash and RAM contents from ELF files"
+license = "AGPL-3.0-or-later"
+
+[dependencies]
+object = { version = "0.36", default-features = false, features = ["read", "elf"] }
+clap = { version = "4", features = ["derive"] }
