@@ -37,7 +37,7 @@ cargo build --release
 
 ## Example firmware
 
-Two example embedded projects are included for generating test ELF files:
+Two example embedded projects are included for generating test ELF files. Both use the same workload: a blinking LED, a 32-bit counter, a 64-element `u16` sensor buffer, and an eight-element calibration table. Both halt on panic and omit logging. Hardware setup, runtime code, and instruction sets still differ, so their binary sizes will differ.
 
 ### STM32F411 (ARM Cortex-M4)
 

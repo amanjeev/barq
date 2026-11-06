@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>barq — {{elf_name}}</title>
+<style>
+{{styles}}</style>
+</head>
+<body>
+
+<h1>barq</h1>
+<p class="subtitle">{{elf_name}}</p>
+
+<div class="legend">
+  <div class="legend-item">
+    <div class="legend-swatch" style="background:#1f3a5f;border:1px solid #264773;"></div>
+    Function
+  </div>
+  <div class="legend-item">
+    <div class="legend-swatch" style="background:#2a1f3f;border:1px solid #3b2a5f;"></div>
+    Data
+  </div>
+  <div class="legend-item">
+    <div class="legend-swatch" style="background:#1f2f1f;border:1px solid #2a4a2a;"></div>
+    Other
+  </div>
+</div>
+
+<input type="search" aria-label="Search symbols" class="search-box" placeholder="Search symbols..." id="search">
+
+<div class="memory-container">
+  <div class="memory-panel">
+    <h2>Flash</h2>
+    <div class="memory-stats">{{flash_sym_count}} symbols — {{flash_total}} bytes total</div>
+    <div class="memory-map" id="flash-map">
+      {{flash_blocks}}
+    </div>
+  </div>
+  <div class="memory-panel">
+    <h2>RAM</h2>
+    <div class="memory-stats">{{ram_sym_count}} symbols — {{ram_total}} bytes total</div>
+    <div class="memory-map" id="ram-map">
+      {{ram_blocks}}
+    </div>
+  </div>
+</div>
+
+<div class="tooltip" id="tooltip"></div>
+
+<script>
+{{script}}</script>
+
+</body>
+</html>

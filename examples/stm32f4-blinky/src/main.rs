@@ -4,21 +4,18 @@
 #![no_std]
 #![no_main]
 
-use core::cell::RefCell;
+use core::cell::{Cell, RefCell};
 use cortex_m::interrupt::Mutex;
 use cortex_m_rt::entry;
 #[allow(unused_imports)]
 use panic_halt as _;
-use stm32f4xx_hal::{
-    pac,
-    prelude::*,
-};
+use stm32f4xx_hal::{pac, prelude::*};
 
 // Static variables — these will show up in RAM (.bss and .data sections)
-static BLINK_COUNT: Mutex<RefCell<u32>> = Mutex::new(RefCell::new(0));
-static mut SENSOR_BUFFER: [u16; 64] = [0u16; 64];
+static BLINK_COUNT: Mutex<Cell<u32>> = Mutex::new(Cell::new(0));
+static SENSOR_BUFFER: Mutex<RefCell<[u16; 64]>> = Mutex::new(RefCell::new([0; 64]));
 
-// Initialized data — goes in .data (copied from Flash to RAM at boot)
+// Read-only calibration data — normally placed in .rodata.
 static CALIBRATION_TABLE: [f32; 8] = [1.0, 1.02, 0.98, 1.01, 0.99, 1.03, 0.97, 1.0];
 
 #[entry]
@@ -55,18 +52,19 @@ fn main() -> ! {
 
 fn increment_blink_count() {
     cortex_m::interrupt::free(|cs| {
-        let mut count = BLINK_COUNT.borrow(cs).borrow_mut();
-        *count = count.wrapping_add(1);
+        let count = BLINK_COUNT.borrow(cs);
+        count.set(count.get().wrapping_add(1));
     });
 }
 
 fn update_sensor_buffer() {
     // Simulate filling a sensor buffer — exercises .bss memory
-    unsafe {
-        for (i, slot) in SENSOR_BUFFER.iter_mut().enumerate() {
+    cortex_m::interrupt::free(|cs| {
+        let mut buffer = SENSOR_BUFFER.borrow(cs).borrow_mut();
+        for (i, slot) in buffer.iter_mut().enumerate() {
             *slot = (i as u16).wrapping_mul(CALIBRATION_TABLE[i % 8] as u16);
         }
-    }
+    });
 }
 
 /// A helper that does some math — adds more .text content

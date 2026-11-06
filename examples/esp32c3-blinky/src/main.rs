@@ -4,24 +4,21 @@
 #![no_std]
 #![no_main]
 
-#[allow(unused_imports)]
-use esp_backtrace as _;
+use core::cell::{Cell, RefCell};
+use critical_section::Mutex;
+
 use esp_hal::delay::Delay;
 use esp_hal::gpio::{Level, Output, OutputConfig};
 use esp_hal::main;
-use esp_println::println;
+#[allow(unused_imports)]
+use panic_halt as _;
 
-// Static variables — will appear in DRAM (.bss)
-static mut SAMPLE_BUFFER: [u32; 128] = [0u32; 128];
-static mut TICK_COUNT: u64 = 0;
+// Same workload as the STM32 example: counter, sensor buffer, and calibration.
+static BLINK_COUNT: Mutex<Cell<u32>> = Mutex::new(Cell::new(0));
+static SENSOR_BUFFER: Mutex<RefCell<[u16; 64]>> = Mutex::new(RefCell::new([0; 64]));
 
-// Initialized data — will appear in .data (DRAM, initialized from Flash)
-static FILTER_COEFFICIENTS: [f32; 16] = [
-    0.0625, 0.0625, 0.0625, 0.0625, 0.0625, 0.0625, 0.0625, 0.0625, 0.0625, 0.0625, 0.0625,
-    0.0625, 0.0625, 0.0625, 0.0625, 0.0625,
-];
-
-static DEVICE_ID: &str = "barq-test-esp32c3";
+// Read-only calibration data — normally placed in .rodata.
+static CALIBRATION_TABLE: [f32; 8] = [1.0, 1.02, 0.98, 1.01, 0.99, 1.03, 0.97, 1.0];
 
 #[main]
 fn main() -> ! {
@@ -33,11 +30,6 @@ fn main() -> ! {
 
     let delay = Delay::new();
 
-    println!("barq ESP32-C3 test firmware booted");
-    println!("Device: {}", DEVICE_ID);
-
-    let mut iteration: u32 = 0;
-
     loop {
         led.set_high();
         delay.delay_millis(500);
@@ -45,53 +37,34 @@ fn main() -> ! {
         led.set_low();
         delay.delay_millis(500);
 
-        iteration = iteration.wrapping_add(1);
-        update_samples(iteration);
-        let avg = compute_moving_average();
-
-        if iteration.is_multiple_of(10) {
-            println!("Tick {}: avg={}", iteration, avg);
-        }
+        increment_blink_count();
+        update_sensor_buffer();
     }
 }
 
-/// Fill sample buffer with synthetic data — exercises DRAM
-fn update_samples(tick: u32) {
-    unsafe {
-        TICK_COUNT = TICK_COUNT.wrapping_add(1);
-        for (i, slot) in SAMPLE_BUFFER.iter_mut().enumerate() {
-            *slot = tick.wrapping_add(i as u32).wrapping_mul(17);
-        }
-    }
+fn increment_blink_count() {
+    critical_section::with(|cs| {
+        let count = BLINK_COUNT.borrow(cs);
+        count.set(count.get().wrapping_add(1));
+    });
 }
 
-/// FIR filter — adds meaningful .text and uses FILTER_COEFFICIENTS from .rodata
-fn compute_moving_average() -> f32 {
-    let mut sum: f32 = 0.0;
-    unsafe {
-        for (i, &coeff) in FILTER_COEFFICIENTS.iter().enumerate() {
-            sum += SAMPLE_BUFFER[i] as f32 * coeff;
+fn update_sensor_buffer() {
+    // Simulate filling a sensor buffer — exercises .bss memory
+    critical_section::with(|cs| {
+        let mut buffer = SENSOR_BUFFER.borrow(cs).borrow_mut();
+        for (i, slot) in buffer.iter_mut().enumerate() {
+            *slot = (i as u16).wrapping_mul(CALIBRATION_TABLE[i % 8] as u16);
         }
-    }
-    sum
+    });
 }
 
-/// CRC-like checksum — more .text content
-fn simple_checksum(data: &[u32]) -> u32 {
-    let mut crc: u32 = 0xFFFF_FFFF;
-    for &word in data {
-        crc ^= word;
-        for _ in 0..8 {
-            if crc & 1 != 0 {
-                crc = (crc >> 1) ^ 0xEDB8_8320;
-            } else {
-                crc >>= 1;
-            }
-        }
-    }
-    !crc
+/// A helper that does some math — adds more .text content
+fn apply_calibration(raw: u16, channel: usize) -> f32 {
+    let factor = CALIBRATION_TABLE[channel % CALIBRATION_TABLE.len()];
+    raw as f32 * factor
 }
 
-// Prevent optimization from removing our functions
+// Make sure these functions aren't optimized away
 #[used]
-static KEEP: [fn(&[u32]) -> u32; 1] = [simple_checksum];
+static KEEP_FNS: [fn(u16, usize) -> f32; 1] = [apply_calibration];

@@ -4,9 +4,9 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+panic-halt = "1.0"
+critical-section = "1.2"
 esp-hal = { version = "1.0.0-beta.0", features = ["esp32c3", "unstable"] }
-esp-println = { version = "0.13", features = ["esp32c3"] }
-esp-backtrace = { version = "0.15", features = ["esp32c3", "panic-handler", "println"] }
 
 [profile.release]
 opt-level = "s"
