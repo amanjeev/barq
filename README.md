@@ -8,7 +8,9 @@ barq firmware.elf -o report.html
 
 Open `report.html` in a browser. The report is a single file that works offline.
 
-barq (Farsi for “lightning/flash”) shows named functions, variables, and constants at their firmware addresses. Use it to inspect memory contents without reading a flat symbol list.
+`barq`: ([برق](https://en.wiktionary.org/wiki/%D8%A8%D8%B1%D9%82#Arabic), IPA: /barq/) takes its name from the Persian word for electricity, borrowed from Arabic “lightning.”
+
+barq shows named functions, variables, and constants at their firmware addresses. Use it to inspect memory contents without reading a flat symbol list.
 
 ## Install and run
 
