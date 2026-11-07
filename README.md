@@ -36,7 +36,7 @@ Omit `-o` to write HTML to stdout. Run `barq --help` for all options.
 |---|---|
 | Flash panel | Symbols classified as Flash, grouped by ELF section |
 | RAM panel | Symbols classified as RAM, including code that runs from RAM |
-| Search | Address groups containing any symbol name that matches your search text |
+| Search | Address groups containing a matching readable or original symbol name |
 | Symbol details | Full name, address, size, and section, with explanations of types, zero sizes, and shared addresses |
 
 ### Shared addresses and overlaps
@@ -54,10 +54,12 @@ Symbols starting at the same address within a section appear in one block.
 
 | Field | Meaning |
 |---|---|
-| Name | The name recorded in the ELF. Rust names such as `_RNv…` are mangled: they encode identifying information beyond the source name. Search and exclusions use this recorded name. |
+| Name | Rust names are displayed in readable form, such as `stm32f4_blinky::apply_calibration`. Details also retain the original ELF name, such as `_RNv…`. Non-Rust names remain unchanged. |
 | Address | Where the symbol is located in the target’s address space, shown in hexadecimal. This is not its offset inside the ELF file. |
 | Size | The byte count recorded for the symbol. Zero means no extent is recorded; it does not prove the symbol is useless or that the referenced code occupies no memory. |
 | Section | The ELF group containing the symbol, such as `.text` or `.bss`. |
+
+Search accepts both readable and original names, including names inside shared-address groups. CLI exclusions (`--exclude-symbol` and `--exclude-symbol-regex`) match **original ELF names only**; copy them from the details table’s `ELF:` line. Readable names omit Rust hash suffixes; distinct original entries remain separate in group details even if their readable names match.
 
 ### Common sections
 
@@ -143,7 +145,7 @@ See the [example guide](https://github.com/amanjeev/barq/blob/main/examples/READ
 4. Group symbols by section and calculate their address spans.
 5. Embed the HTML template, CSS, JavaScript, and symbol data in one report.
 
-Rust symbol names currently appear in their mangled form. ELF files with stripped symbols provide less detail. 64-bit ELF files are not supported.
+Rust symbol names are demangled for display; original ELF names remain available in details. ELF files with stripped symbols provide less detail. 64-bit ELF files are not supported.
 
 ## License
 

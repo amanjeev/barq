@@ -352,7 +352,33 @@ fn validate(barq: &Path, directory: &Path) -> Result<()> {
             counters.len()
         ),
     )?;
-    let names = report(barq, &elf, &[])?;
+    let output = captured(Command::new(barq).arg(&elf))?;
+    let html = String::from_utf8(output.stdout)?;
+    let names = report_names(&html);
+    let readable = "large_firmware::workload::stage_000::run";
+    check(
+        html.contains(&format!("data-display-name=\"{readable}\"")),
+        format!("{}: missing readable Rust stage name", elf.display()),
+    )?;
+    let original = functions
+        .iter()
+        .find(|name| name.contains("stage_000"))
+        .ok_or("missing original stage_000 function name")?;
+    let excluded = report(barq, &elf, &["--exclude-symbol", original])?;
+    check(
+        !excluded.contains(*original),
+        "original-name exclusion did not remove the Rust symbol",
+    )?;
+    let readable_exclusion = report(barq, &elf, &["--exclude-symbol", readable])?;
+    check(
+        readable_exclusion.contains(*original),
+        "CLI exclusions unexpectedly matched the readable name",
+    )?;
+    let excluded_regex = report(barq, &elf, &["--exclude-symbol-regex", "^large_firmware::"])?;
+    check(
+        excluded_regex.contains(*original),
+        "CLI regex unexpectedly matched the readable name",
+    )?;
     require_names(&names, &functions, &elf)?;
     require_names(&names, &counters, &elf)?;
     Ok(())

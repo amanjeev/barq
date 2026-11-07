@@ -32,12 +32,12 @@ function sectionDescription(section) {
 
 
 function detailRows(el) {
-  const { name, addr, size, section } = el.dataset;
+  const { name, displayName, addr, size, section } = el.dataset;
   const kind = el.classList.contains('function') ? 'Function — executable code.'
     : el.classList.contains('data') ? 'Data — a variable or constant.'
     : 'Other — an ELF symbol such as an address marker or label.';
   const rows = [
-    ['label', name],
+    ['label', displayName],
     ['explanation', kind],
     ['addr', `Address: 0x${BigInt(addr).toString(16).padStart(8, '0')}`],
     ['explanation', 'Memory address on the microcontroller.'],
@@ -60,8 +60,8 @@ function detailRows(el) {
   if (group.members.length > 1 || group.overlaps.length > 0) {
     rows.push(['explanation', 'Open details for every name, its recorded size, and intersecting address groups.']);
   }
-  if (/^_R|^_ZN/.test(name)) {
-    rows.push(['explanation', 'This looks like a mangled Rust name: an encoded name from the compiler.']);
+  if (displayName !== name) {
+    rows.push(['explanation', 'This is a readable Rust name. Open details for the original ELF name used by CLI exclusions.']);
   }
   return rows;
 }
@@ -97,7 +97,13 @@ function appendTable(container, captionText, headings, rows) {
     const row = document.createElement('tr');
     cells.forEach((text, index) => {
       const cell = document.createElement('td');
-      cell.textContent = text;
+      cell.textContent = typeof text === 'string' ? text : text.display;
+      if (typeof text !== 'string' && text.original !== text.display) {
+        const original = document.createElement('code');
+        original.className = 'original-name';
+        original.textContent = `ELF: ${text.original}`;
+        cell.append(original);
+      }
       if (index === 0 && match) {
         const badge = document.createElement('span');
         badge.className = 'match-badge';
@@ -112,18 +118,27 @@ function appendTable(container, captionText, headings, rows) {
   container.append(table);
 }
 
+function matchesName(member, query) {
+  return member.name.toLowerCase().includes(query)
+    || member.displayName.toLowerCase().includes(query);
+}
+
+function nameCell(display, original) {
+  return { display, original };
+}
+
 function renderGroupDetails(el) {
   renderDetails(dialogContent, el);
   const group = groupInfo.get(el);
   appendTable(dialogContent, `Symbol entries at 0x${BigInt(el.dataset.addr).toString(16).padStart(8, '0')}`,
     ['Name', 'Type', 'Recorded size'], group.members.map(member => ({
-      cells: [member.name, member.kind, member.size === '0' ? 'Unknown (0 recorded)' : `${member.size} bytes`],
-      match: group.query !== '' && member.name.toLowerCase().includes(group.query),
+      cells: [nameCell(member.displayName, member.name), member.kind, member.size === '0' ? 'Unknown (0 recorded)' : `${member.size} bytes`],
+      match: group.query !== '' && matchesName(member, group.query),
     })));
   if (group.overlaps.length > 0) {
     appendTable(dialogContent, 'Intersecting address groups in this section',
       ['Group', 'Starting address', 'Shared bytes'], group.overlaps.map(other => ({
-        cells: [other.overlapName, `0x${BigInt(other.overlapAddr).toString(16).padStart(8, '0')}`, other.overlapBytes],
+        cells: [nameCell(other.overlapDisplayName, other.overlapName), `0x${BigInt(other.overlapAddr).toString(16).padStart(8, '0')}`, other.overlapBytes],
       })));
   }
 }
@@ -181,7 +196,7 @@ function updateSearch() {
   hideTooltip();
   for (const el of blocks) {
     const group = groupInfo.get(el);
-    const matches = group.members.filter(member => member.name.toLowerCase().includes(query));
+    const matches = group.members.filter(member => matchesName(member, query));
     group.query = query;
     el.hidden = matches.length === 0;
     if (!el.hidden) {
@@ -189,9 +204,9 @@ function updateSearch() {
       matchingSymbols += matches.length;
     }
     // An alias search reveals its group and names the matching entry first.
-    el.querySelector('.symbol-name').textContent = query && matches.length ? matches[0].name : group.displayName;
+    el.querySelector('.symbol-name').textContent = query && matches.length ? matches[0].displayName : group.displayName;
     el.setAttribute('aria-label', query && matches.length
-      ? `${matches[0].name}. Search match. ${group.label}` : group.label);
+      ? `${matches[0].displayName}. Search match. ${group.label}` : group.label);
   }
   for (const group of document.querySelectorAll('.section-group')) {
     group.hidden = ![...group.querySelectorAll('.symbol-block')].some(el => !el.hidden);

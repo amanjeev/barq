@@ -10,3 +10,4 @@ readme = "../README.md"
 object = { version = "0.36", default-features = false, features = ["read", "elf"] }
 clap = { version = "4", features = ["derive"] }
 regex = "1"
+rustc-demangle = "0.1"

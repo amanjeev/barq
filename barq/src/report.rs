@@ -44,6 +44,12 @@ pub(crate) fn generate_html(
     html
 }
 
+fn display_name(name: &str) -> String {
+    rustc_demangle::try_demangle(name)
+        .map(|symbol| format!("{symbol:#}"))
+        .unwrap_or_else(|_| name.to_string())
+}
+
 fn kind_names(kind: SymbolKind) -> (&'static str, &'static str) {
     match kind {
         SymbolKind::Function => ("function", "Function"),
@@ -81,9 +87,10 @@ fn render_memory_blocks(regions: &[MemoryRegion], panel: &str) -> String {
         for group in &groups {
             let sym = representative(&group.symbols);
             let (kind_class, kind_label) = kind_names(sym.kind);
+            let readable_name = display_name(&sym.name);
             let mut accessible_name = format!(
                 "{}. {kind_label}. Address 0x{:08x}. Size {} bytes. Section {}. Open details.",
-                sym.name, sym.address, sym.size, sym.section
+                readable_name, sym.address, sym.size, sym.section
             );
             if group.symbols.len() > 1 {
                 accessible_name.push_str(&format!(
@@ -101,10 +108,10 @@ fn render_memory_blocks(regions: &[MemoryRegion], panel: &str) -> String {
             let id = format!("{panel}-symbols-{group_number}");
             group_number += 1;
             html.push_str(&format!(
-                r#"<button type="button" class="symbol-block {kind_class}" style="--symbol-width:{width:.0}px" aria-label="{}" aria-haspopup="dialog" aria-controls="symbol-dialog" data-name="{}" data-addr="{}" data-size="{}" data-section="{}" data-members="{id}" data-count="{}" data-known="{}" data-shared="{}"><span class="symbol-name">{}</span><span class="symbol-kind">{kind_label}"#,
-                html_escape(&accessible_name), html_escape(&sym.name), sym.address, sym.size,
+                r#"<button type="button" class="symbol-block {kind_class}" style="--symbol-width:{width:.0}px" aria-label="{}" aria-haspopup="dialog" aria-controls="symbol-dialog" data-name="{}" data-display-name="{}" data-addr="{}" data-size="{}" data-section="{}" data-members="{id}" data-count="{}" data-known="{}" data-shared="{}"><span class="symbol-name">{}</span><span class="symbol-kind">{kind_label}"#,
+                html_escape(&accessible_name), html_escape(&sym.name), html_escape(&readable_name), sym.address, sym.size,
                 html_escape(&sym.section), group.symbols.len(), group.known_size, group.shared_bytes,
-                html_escape(&truncate_name(&sym.name, 30)),
+                html_escape(&readable_name),
             ));
             if group.symbols.len() > 1 {
                 html.push_str(&format!(" · {} entries", group.symbols.len()));
@@ -122,16 +129,18 @@ fn render_memory_blocks(regions: &[MemoryRegion], panel: &str) -> String {
             for member in &group.symbols {
                 let (_, kind) = kind_names(member.kind);
                 html.push_str(&format!(
-                    r#"<span data-name="{}" data-size="{}" data-kind="{kind}"></span>"#,
+                    r#"<span data-name="{}" data-size="{}" data-kind="{kind}" data-display-name="{}"></span>"#,
                     html_escape(&member.name),
                     member.size,
+                    html_escape(&display_name(&member.name)),
                 ));
             }
             for &(index, bytes) in &group.overlaps {
                 let other = &groups[index];
                 html.push_str(&format!(
-                    r#"<span data-overlap-name="{}" data-overlap-addr="{}" data-overlap-bytes="{bytes}"></span>"#,
+                    r#"<span data-overlap-name="{}" data-overlap-addr="{}" data-overlap-bytes="{bytes}" data-overlap-display-name="{}"></span>"#,
                     html_escape(&representative(&other.symbols).name), other.address,
+                    html_escape(&display_name(&representative(&other.symbols).name)),
                 ));
             }
             html.push_str("</template>");
@@ -139,16 +148,6 @@ fn render_memory_blocks(regions: &[MemoryRegion], panel: &str) -> String {
         html.push_str("</div>");
     }
     html
-}
-
-fn truncate_name(name: &str, max_len: usize) -> String {
-    if name.chars().count() <= max_len {
-        name.to_string()
-    } else if max_len == 0 {
-        String::new()
-    } else {
-        format!("{}…", name.chars().take(max_len - 1).collect::<String>())
-    }
 }
 
 fn html_escape(s: &str) -> String {
@@ -275,10 +274,61 @@ mod tests {
     }
 
     #[test]
-    fn truncation_respects_unicode_character_boundaries() {
-        assert_eq!(truncate_name("aé⚡z", 3), "aé…");
-        assert_eq!(truncate_name("⚡", 1), "⚡");
-        assert_eq!(truncate_name("ab", 1), "…");
-        assert_eq!(truncate_name("ab", 0), "");
+    fn demangles_legacy_and_v0_names_without_hash_suffixes() {
+        assert_eq!(display_name("_ZN3foo3bar17h05af221e174051e9E"), "foo::bar");
+        assert_eq!(
+            display_name("_RNvCsj7b3fXFyzpb_14stm32f4_blinky17apply_calibration"),
+            "stm32f4_blinky::apply_calibration"
+        );
+    }
+
+    #[test]
+    fn keeps_non_rust_and_malformed_names_unchanged() {
+        for name in [
+            "DefaultHandler",
+            ".L0 ",
+            "$d",
+            "_Rinvalid",
+            "_ZNbroken",
+            "aé⚡z",
+            "_Z3foov",
+        ] {
+            assert_eq!(display_name(name), name);
+        }
+    }
+
+    #[test]
+    fn escapes_html_characters_introduced_by_demangling() {
+        let original = "_ZN4test9$LT$T$GT$E";
+        assert_eq!(display_name(original), "test::<T>");
+        let region = fixture_region("Flash: .text", vec![fixture_symbol(original, 0x1000, 8)]);
+        let html = generate_html(&[region], &[], "test.elf");
+        assert!(html.contains("<span class=\"symbol-name\">test::&lt;T&gt;</span>"));
+        assert!(html.contains("data-display-name=\"test::&lt;T&gt;\""));
+        assert!(!html.contains("test::<T>"));
+        assert!(html.contains(&format!("data-name=\"{original}\"")));
+    }
+
+    #[test]
+    fn readable_names_do_not_replace_or_merge_original_identities() {
+        let originals = [
+            "_ZN3foo3bar17h05af221e174051e9E",
+            "_ZN3foo3bar17h1111111111111111E",
+        ];
+        let region = fixture_region(
+            "Flash: .text",
+            originals
+                .iter()
+                .map(|name| fixture_symbol(name, 0x1000, 8))
+                .collect(),
+        );
+        let html = generate_html(&[region], &[], "test.elf");
+        assert!(html.contains("<span class=\"symbol-name\">foo::bar</span>"));
+        assert!(html.contains("aria-label=\"foo::bar. Function."));
+        for original in originals {
+            assert!(html.contains(&format!("data-name=\"{original}\"")));
+        }
+        assert!(html.contains("data-count=\"2\""));
+        assert_eq!(html.matches("data-display-name=\"foo::bar\"").count(), 3);
     }
 }

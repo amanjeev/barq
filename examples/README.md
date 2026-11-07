@@ -47,6 +47,8 @@ barq examples/stm32f4-blinky/target/thumbv7em-none-eabihf/release/symbol-edges \
 
 The filtered report hides the three `barq_filter_*` functions. It keeps `barq_zero_size_marker`, `barq_payload_alias`, and their four-byte `barq_edge_payload`.
 
+Rust symbols have readable names in the reports. In `large-firmware`, try searching for `large_firmware::workload::stage_000::run`. Searching its original ELF name also finds it. CLI exclusions use original names; copy the `ELF:` name from the details table when excluding a Rust symbol.
+
 ## Check all workloads
 
 Run from the repository root. Install both toolchains and targets first:

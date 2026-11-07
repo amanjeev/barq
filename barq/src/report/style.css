@@ -186,3 +186,5 @@
   .details-table th, .details-table td { text-align: left; vertical-align: top; padding: 0.5rem; border-bottom: 1px solid #8b949e; overflow-wrap: anywhere; }
   .details-table th:first-child { width: 50%; }
   .match-badge { display: block; font-weight: bold; color: #ffa657; }
+
+  .original-name { display: block; margin-top: 0.25rem; color: #aebbc9; font: inherit; font-size: 0.875rem; overflow-wrap: anywhere; }
