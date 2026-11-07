@@ -1,0 +1,51 @@
+name: Publish example reports
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pages-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Rust toolchains
+        run: |
+          rustup toolchain install stable --profile minimal --target thumbv7em-none-eabihf
+          rustup toolchain install nightly --profile minimal --component rust-src --target riscv32imc-unknown-none-elf
+      - name: Test barq
+        run: cargo +stable test --locked --manifest-path barq/Cargo.toml
+      - name: Test site tooling
+        run: cargo +stable test --locked --manifest-path xtask/Cargo.toml
+      - name: Build site and example reports
+        run: cargo +stable xtask site
+      - name: Upload site
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    if: github.event_name != 'pull_request'
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+      - name: Deploy site
+        id: deployment
+        uses: actions/deploy-pages@v5

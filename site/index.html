@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Explore microcontroller Flash and RAM with barq. Open interactive memory reports for STM32F411 and ESP32-C3 firmware.">
+  <title>barq — Explore your firmware</title>
+  <style>
+    :root { color-scheme: dark; font-family: system-ui, sans-serif; background: #0d1117; color: #e6edf3; }
+    * { box-sizing: border-box; }
+    body { max-width: 1050px; margin: auto; padding: clamp(24px, 6vw, 72px); line-height: 1.6; }
+    header, footer { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; }
+    header { padding-bottom: 60px; }
+    .brand { font-size: 24px; font-weight: 800; color: #79c0ff; }
+    a { color: #79c0ff; text-underline-offset: 4px; }
+    a:focus-visible { outline: 3px solid #ffa657; outline-offset: 6px; }
+    h1 { max-width: 760px; font-size: clamp(36px, 6vw, 60px); line-height: 1.1; letter-spacing: -0.04em; margin: 0 0 24px; }
+    .intro { max-width: 650px; font-size: 19px; color: #aebbc9; }
+    .examples { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: 20px; margin: 40px 0; }
+    .card { background: #161b22; border: 1px solid #30363d; border-radius: 16px; padding: 28px; }
+    .chip { color: #aebbc9; font: 13px ui-monospace, monospace; }
+    h2 { margin: 8px 0; font-size: 26px; }
+    .card p { color: #aebbc9; }
+    .button { display: inline-block; margin-top: 12px; background: #79c0ff; color: #0d1117; padding: 10px 16px; border-radius: 8px; font-weight: 700; text-decoration: none; }
+    table { width: 100%; border-collapse: collapse; margin: 24px 0; text-align: left; }
+    caption { text-align: left; color: #aebbc9; }
+    th, td { padding: 16px 12px; border-bottom: 1px solid #30363d; }
+    small { font-weight: normal; color: #aebbc9; }
+    .note { color: #aebbc9; max-width: 720px; }
+    code { font-family: ui-monospace, monospace; }
+    pre { overflow-x: auto; background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 18px; }
+    footer { border-top: 1px solid #30363d; margin-top: 48px; padding-top: 20px; font-size: 14px; color: #aebbc9; }
+  </style>
+</head>
+<body>
+  <header>
+    <span class="brand">barq</span>
+    <a href="https://github.com/amanjeev/barq">Source &amp; documentation ↗</a>
+  </header>
+  <main>
+    <h1>See what lives in your firmware.</h1>
+    <p class="intro">Explore functions, variables, and constants in Flash and RAM. Choose an example report, search for a symbol, or hover over a block to inspect its address and size.</p>
+    <div class="examples" aria-label="Example firmware reports">
+      <article class="card">
+        <span class="chip">ARM CORTEX-M4</span>
+        <h2>STM32F411</h2>
+        <p>A blinking LED, a counter, and a sensor buffer. Inspect the vector table, code, and static data.</p>
+        <a class="button" href="stm32f4.html">Explore STM32 report →</a>
+      </article>
+      <article class="card">
+        <span class="chip">RISC-V</span>
+        <h2>ESP32-C3</h2>
+        <p>The same application workload on a different processor. Explore its runtime and code that runs from RAM.</p>
+        <a class="button" href="esp32c3.html">Explore ESP32 report →</a>
+      </article>
+    </div>
+    <h2>Compare specific workloads</h2>
+    <p class="note">Each workload uses shared source on both architectures. Pick a pair to compare memory layout, symbol handling, or a larger report.</p>
+    <div style="overflow-x:auto">
+      <table>
+        <caption>Additional example reports</caption>
+        <thead><tr><th scope="col">Workload</th><th scope="col">STM32F411</th><th scope="col">ESP32-C3</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">Memory sections<br><small>Known .bss, .data, and .rodata sizes</small></th><td><a href="stm32f4-memory-sections.html">ARM sections</a></td><td><a href="esp32c3-memory-sections.html">RISC-V sections</a></td></tr>
+          <tr><th scope="row">Symbol edge cases<br><small>Aliases, zero-size markers, and long names</small></th><td><a href="stm32f4-symbol-edges.html">ARM symbols</a></td><td><a href="esp32c3-symbol-edges.html">RISC-V symbols</a></td></tr>
+          <tr><th scope="row">Large firmware<br><small>256 functions and 256 counters</small></th><td><a href="stm32f4-large-firmware.html">ARM large report</a></td><td><a href="esp32c3-large-firmware.html">RISC-V large report</a></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="note">Reports are generated from the example firmware in this repository. They include zero-size symbols and internal labels. Totals represent symbol spans, not chip capacity or live memory usage.</p>
+    <h2>Try your own firmware</h2>
+    <pre><code>barq firmware.elf -o report.html</code></pre>
+    <p class="note">Open the generated file in your browser. Everything is embedded in one HTML file, so it also works offline.</p>
+  </main>
+  <footer>
+    <span>barq · Firmware memory visualization</span>
+    <a href="https://github.com/amanjeev/barq#install-and-run">Install barq</a>
+  </footer>
+</body>
+</html>

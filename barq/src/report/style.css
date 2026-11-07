@@ -1,0 +1,188 @@
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'SF Mono', 'Cascadia Code', 'Fira Code', monospace;
+    background: #0d1117;
+    color: #c9d1d9;
+    padding: 2rem;
+  }
+  h1 { color: #58a6ff; margin-bottom: 0.5rem; }
+  .subtitle { color: #8b949e; margin-bottom: 2rem; }
+  .memory-container {
+    display: flex;
+    gap: 2rem;
+    flex-wrap: wrap;
+  }
+  .memory-panel {
+    flex: 1;
+    min-width: 0;
+    flex-basis: 400px;
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 8px;
+    padding: 1.5rem;
+  }
+  .memory-panel h2 {
+    color: #f0883e;
+    margin-bottom: 0.5rem;
+  }
+  .memory-stats {
+    color: #8b949e;
+    font-size: 0.85rem;
+    margin-bottom: 1rem;
+  }
+  .memory-map {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .section-group {
+    margin-bottom: 0.5rem;
+  }
+  .section-label {
+    font-size: 0.75rem;
+    color: #8b949e;
+    padding: 0.25rem 0;
+  }
+  .symbol-block {
+    display: inline-block;
+    padding: 4px 8px;
+    margin: 1px;
+    border-radius: 3px;
+    font-size: 0.7rem;
+    cursor: pointer;
+    transition: transform 0.1s, box-shadow 0.1s;
+    position: relative;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .symbol-block:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+    z-index: 10;
+  }
+  .symbol-block.function { background: #1f3a5f; color: #58a6ff; border: 1px solid #58a6ff; }
+  .symbol-block.data { background: #2a1f3f; color: #bc8cff; border: 1px solid #bc8cff; }
+  .symbol-block.other { background: #1f2f1f; color: #7ee787; border: 1px solid #7ee787; }
+  .tooltip {
+    display: none;
+    position: fixed;
+    background: #1c2128;
+    border: 1px solid #444c56;
+    border-radius: 6px;
+    padding: 0.75rem;
+    font-size: 0.8rem;
+    z-index: 100;
+    max-width: min(400px, calc(100vw - 24px));
+    overflow-wrap: anywhere;
+    pointer-events: none;
+  }
+  .tooltip.visible { display: block; }
+  .tooltip .label { color: #f0883e; font-weight: bold; }
+  .tooltip .addr { color: #8b949e; }
+  .tooltip .size { color: #7ee787; }
+  .tooltip .explanation { color: #aebbc9; font-size: 0.75rem; line-height: 1.4; margin: 0.25rem 0 0.6rem; }
+  .search-box {
+    width: 100%;
+    padding: 0.5rem;
+    background: #0d1117;
+    border: 1px solid #8b949e;
+    border-radius: 4px;
+    color: #c9d1d9;
+    font-family: inherit;
+    font-size: 1rem;
+    min-height: 44px;
+    margin-bottom: 1rem;
+  }
+  .search-box:focus { outline: none; border-color: #58a6ff; }
+  .legend {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    font-size: 0.85rem;
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+  .legend-swatch {
+    width: 14px;
+    height: 14px;
+    border-radius: 3px;
+  }
+  .hidden { display: none !important; }
+
+  /* Native controls retain keyboard/touch behavior; text labels supplement color. */
+  .symbol-block {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 0.25rem;
+    font-family: inherit;
+    text-align: left;
+    font-size: 0.875rem;
+    min-height: 44px;
+    max-width: min(100%, max(160px, var(--symbol-width)));
+    vertical-align: middle;
+  }
+  .symbol-name { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .symbol-kind { font-size: 0.75rem; }
+  .section-label { font-size: 0.875rem; font-weight: normal; overflow-wrap: anywhere; }
+  .subtitle { overflow-wrap: anywhere; }
+  .help { margin: 0.5rem 0; color: #aebbc9; line-height: 1.5; }
+  #search-status { margin: 0 0 1rem; min-height: 1.5em; }
+  button:focus-visible, input:focus-visible {
+    outline: 3px solid #ffa657;
+    outline-offset: 3px;
+  }
+  .search-box:focus { outline: 3px solid #ffa657; outline-offset: 3px; }
+  [hidden] { display: none !important; }
+  .tooltip {
+    pointer-events: auto;
+    max-height: calc(100dvh - 16px);
+    overflow-y: auto;
+    line-height: 1.5;
+    font-size: 0.875rem;
+  }
+  .tooltip .explanation { font-size: inherit; }
+  dialog {
+    color: #c9d1d9;
+    background: #1c2128;
+    border: 1px solid #8b949e;
+    border-radius: 8px;
+    margin: auto;
+    padding: clamp(1rem, 3vw, 2rem);
+    width: min(42rem, calc(100% - 2rem));
+    max-height: calc(100dvh - 2rem);
+    overflow-y: auto;
+    overflow-wrap: anywhere;
+    line-height: 1.6;
+  }
+  dialog::backdrop { background: rgb(0 0 0 / 65%); }
+  .dialog-header { display: flex; flex-wrap: wrap; gap: 1rem; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+  #close-dialog { font: inherit; min-height: 44px; padding: 0.5rem 0.75rem; background: #1f3a5f; color: #c9d1d9; border: 1px solid #8b949e; border-radius: 4px; cursor: pointer; }
+  #dialog-content .label { color: #f0883e; font-weight: bold; }
+  #dialog-content .explanation { color: #aebbc9; margin-bottom: 1rem; }
+  @media (max-width: 480px) {
+    body { padding: 1rem; }
+    .memory-panel { padding: 1rem; }
+    .legend { flex-wrap: wrap; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .symbol-block { transition: none; }
+    .symbol-block:hover { transform: none; }
+  }
+  @media (forced-colors: active) {
+    .symbol-block, #close-dialog { border: 1px solid ButtonText; }
+    button:focus-visible, input:focus-visible { outline-color: Highlight; }
+  }
+
+  .coverage { color: #aebbc9; font-size: 0.875rem; line-height: 1.5; margin-bottom: 0.5rem; }
+  .overlap-badge { font-size: 0.75rem; font-weight: bold; }
+  .details-table { width: 100%; table-layout: fixed; border-collapse: collapse; margin: 1.5rem 0; }
+  .details-table caption { text-align: left; font-weight: bold; margin-bottom: 0.5rem; }
+  .details-table th, .details-table td { text-align: left; vertical-align: top; padding: 0.5rem; border-bottom: 1px solid #8b949e; overflow-wrap: anywhere; }
+  .details-table th:first-child { width: 50%; }
+  .match-badge { display: block; font-weight: bold; color: #ffa657; }

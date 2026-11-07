@@ -1,0 +1,15 @@
+[package]
+name = "esp32c3-blinky"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+panic-halt = "1.0"
+critical-section = "1.2"
+esp-hal = { version = "1.0.0-beta.0", features = ["esp32c3", "unstable"] }
+
+[profile.release]
+opt-level = "s"
+debug = true        # keep debug symbols for barq to parse
+lto = true
+codegen-units = 1

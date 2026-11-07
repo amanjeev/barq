@@ -1,0 +1,16 @@
+[package]
+name = "stm32f4-blinky"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+cortex-m = "0.7"
+cortex-m-rt = "0.7"
+panic-halt = "1.0"
+stm32f4xx-hal = { version = "0.22", features = ["stm32f411"] }
+
+[profile.release]
+opt-level = "s"
+debug = true        # keep debug symbols for barq to parse
+lto = true
+codegen-units = 1

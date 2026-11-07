@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>barq — {{elf_name}}</title>
+<style>
+{{styles}}</style>
+</head>
+<body>
+
+<main id="main-content">
+<h1>barq</h1>
+<p class="subtitle">{{elf_name}}</p>
+
+<div class="legend">
+  <div class="legend-item">
+    <div class="legend-swatch" style="background:#1f3a5f;border:1px solid #264773;"></div>
+    Function
+  </div>
+  <div class="legend-item">
+    <div class="legend-swatch" style="background:#2a1f3f;border:1px solid #3b2a5f;"></div>
+    Data
+  </div>
+  <div class="legend-item">
+    <div class="legend-swatch" style="background:#1f2f1f;border:1px solid #2a4a2a;"></div>
+    Other
+  </div>
+</div>
+
+<label for="search">Search symbols</label>
+<p id="symbol-help" class="help">Each block groups symbol entries with the same address in a section. Search finds any name in a group. Tab to a block and press Enter or Space, or tap it, to open details. Press Escape to close.</p>
+<input type="search" aria-describedby="symbol-help" class="search-box" placeholder="Search symbols..." id="search">
+
+<p id="search-status" role="status" aria-live="polite" aria-atomic="true"></p>
+
+<div class="memory-container">
+  <section class="memory-panel" aria-labelledby="flash-heading">
+    <h2 id="flash-heading">Flash</h2>
+    <div class="memory-stats">{{flash_sym_count}} symbol entries — {{flash_total}} bytes span</div>
+    <div class="memory-map" id="flash-map">
+      {{flash_blocks}}
+    </div>
+  </section>
+  <section class="memory-panel" aria-labelledby="ram-heading">
+    <h2 id="ram-heading">RAM</h2>
+    <div class="memory-stats">{{ram_sym_count}} symbol entries — {{ram_total}} bytes span</div>
+    <div class="memory-map" id="ram-map">
+      {{ram_blocks}}
+    </div>
+  </section>
+</div>
+
+</main>
+
+<div class="tooltip" id="tooltip" aria-hidden="true"></div>
+<dialog id="symbol-dialog" aria-labelledby="dialog-title">
+  <div class="dialog-header">
+    <h2 id="dialog-title">Symbol details</h2>
+    <button type="button" id="close-dialog" autofocus>Close details</button>
+  </div>
+  <div id="dialog-content"></div>
+</dialog>
+
+<script>
+{{script}}</script>
+
+</body>
+</html>
